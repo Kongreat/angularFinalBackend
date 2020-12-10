@@ -16,8 +16,9 @@ namespace WebApplication2.Controllers
         public HttpResponseMessage Get(string date)
         {
             string query = @"
-                        select TaskId as id, TaskTitle as title, TaskDate as date from dbo.Tasks
+                        select TaskId, TaskTitle, TaskDate from dbo.Tasks
                         where TaskDate='" + date + @"'
+                        order by TaskId
                     ";
             DataTable table = new DataTable();
             using (var con = new SqlConnection(ConfigurationManager.ConnectionStrings["TasksAppDB"].ConnectionString))
@@ -30,40 +31,54 @@ namespace WebApplication2.Controllers
             return Request.CreateResponse(HttpStatusCode.OK, table);
         }
 
-        public string Post (Task task)
+        public int Post (Task task)
         {
+            int res;
             try
             {
                 string query = @"insert into dbo.Tasks values 
-                                ('"+task.TaskId + @"',
+                                (
                                 '"+task.TaskTitle + @"',
                                 '"+task.TaskDate + @"'
                                 )
                                 ";
+
+                string query2 = @"SELECT TaskId
+                                FROM dbo.Tasks
+                                ORDER BY TaskId DESC
+                                ";
                 DataTable table = new DataTable();
                 using (var con = new SqlConnection(ConfigurationManager.ConnectionStrings["TasksAppDB"].ConnectionString))
-                using (var cmd = new SqlCommand(query, con))
-                using (var da = new SqlDataAdapter(cmd))
                 {
-                    cmd.CommandType = CommandType.Text;
-                    da.Fill(table);
+                    using (var cmd = new SqlCommand(query, con))
+                    using (var da = new SqlDataAdapter(cmd))
+                    {
+                        cmd.CommandType = CommandType.Text;
+                        da.Fill(table);
+                    }
+
+                    using (SqlCommand cmd = new SqlCommand(query2, con))
+
+                    {
+                        con.Open();
+                        res = (int)cmd.ExecuteScalar();
+                    }
                 }
-                return "Added successfully";
-            }
+                return res;
+        }
 
             catch (Exception)
             {
-                return "Failed to post";
+                return -1;
             }
-        }
+}
 
-        public string Delete(Task task)
+        public string Delete(int id)
         {
             try
             {
                 string query = @"delete from dbo.Tasks where
-                                TaskId = '" + task.TaskId +@"' and 
-                                TaskDate = '" + task.TaskDate +@"'
+                                TaskId = " + id + @"
                                 ";
                 DataTable table = new DataTable();
                 using (var con = new SqlConnection(ConfigurationManager.ConnectionStrings["TasksAppDB"].ConnectionString))

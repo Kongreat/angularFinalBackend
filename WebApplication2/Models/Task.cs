@@ -7,7 +7,7 @@ namespace WebApplication2.Models
 {
     public class Task
     {
-        public string TaskId { get; set; } 
+        public int TaskId { get; set; } 
         public string TaskTitle { get; set; } 
         public string TaskDate { get; set; } 
     }
